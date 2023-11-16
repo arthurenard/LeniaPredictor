@@ -5,7 +5,7 @@ from model import EnsemblePredictor, SymmetricDNN
 
 def get_model_architecture(model_path):
     model_state = torch.load(model_path)
-    state_dict = model_state['state_dict']  # Assuming the saved structure includes 'state_dict'
+    state_dict = model_state['state_dict']
     architecture = {}
     for param_tensor in state_dict:
         architecture[param_tensor] = state_dict[param_tensor].size()
@@ -13,7 +13,7 @@ def get_model_architecture(model_path):
 
 
 def train_on_annotation(json_path='./annotations_data.json', 
-                        tensor_data_path='./dict_data_tensors_test.pth', 
+                        tensor_data_path='./dict_data_tensors.pth', 
                         from_scratch=False, 
                         save_updated_models=True, 
                         base_model_class = SymmetricDNN, 
@@ -24,8 +24,28 @@ def train_on_annotation(json_path='./annotations_data.json',
                         epochs=10, 
                         batch_size=20, 
                         with_bootstrap = True):
-    """
-     un directory par ensemble de model
+    """        
+    Train an ensemble of models for annotation data.
+    /!\\/!\\/!\\ Use one directory per EnsembleOfPredictors to save and load the model /!\\/!\\/!\\
+
+    Args:
+    json_path: Path to the JSON file containing annotations data.
+    tensor_data_path: Path to the preprocessed parameters in tensor format.
+    from_scratch: Whether to start training from scratch or continue from saved models.
+    save_updated_models: Whether to save the updated models after training.
+    base_model_class: Class of the base model to be used in the ensemble.
+    num_predictors: Number of predictors in the ensemble.
+    hidden_layers: List specifying the architecture of the base model's hidden layers.
+    device: Device for training (e.g., "cuda:0" for GPU or "cpu" for CPU).
+    saved_models_dir: Directory to save/load trained models.
+    epochs: Number of training epochs.
+    batch_size: Batch size for training.
+    with_bootstrap: Whether to use bootstrap sampling during training.
+
+    Description:
+    This script loads preprocessed data and annotations from specified paths, prepares inputs, and trains an ensemble
+    of models using the specified configuration. It allows for continuing training from saved models or starting
+    training from scratch. The trained models can be saved if desired.
     """
 
     # Load preprocessed data
@@ -53,7 +73,7 @@ def train_on_annotation(json_path='./annotations_data.json',
     inputs_right = torch.stack(inputs_right)
     outputs = torch.tensor(outputs, dtype=torch.float32)[:, None]  # Make it (B,1) format
 
-# Determine model architecture from saved models or default settings
+    # Determine model architecture from saved models or default settings
     if not from_scratch and saved_models_dir is not None and os.path.exists(saved_models_dir):
         example_model_path = os.path.join(saved_models_dir, 'predictor_0.pt')
         if os.path.exists(example_model_path):
@@ -77,13 +97,13 @@ def train_on_annotation(json_path='./annotations_data.json',
 
 # Set up and train
 train_on_annotation(json_path='./annotations_data.json',
-                    tensor_data_path='./dict_data_tensors_test.pth',
+                    tensor_data_path='./dict_data_tensors.pth',
                     base_model_class=SymmetricDNN,
                     num_predictors=3,
                     hidden_layers=[1000, 6],
                     device="cuda:0",
                     saved_models_dir='./saved_models',
-                    from_scratch=False,
+                    from_scratch=True,
                     epochs=100,
                     batch_size=20,
                     save_updated_models=True, 

@@ -2,28 +2,35 @@ import os
 import pickle
 import torch
 
-def custom_tensor_repr(tensor):
-    if isinstance(tensor, torch.Tensor):
-        tensor_repr = repr(tensor).replace('tensor(', 'torch.tensor(')
-        return tensor_repr.replace(', device=\'cuda:0\')', ')')
-    return repr(tensor)
-
 def format_dict_for_py(data_dict):
     formatted_dict = {}
     for key, value in data_dict.items():
         formatted_value = {}
         for sub_key, sub_value in value.items():
             if sub_key != "k_size":  # Skip "k_size" in nested dictionaries
-                formatted_value[sub_key] = custom_tensor_repr(sub_value)
+                formatted_value[sub_key] =  sub_value
         formatted_dict[key] = formatted_value
     return formatted_dict
 
 def update_and_process_data(input_directory, output_py_file, output_pth_file, target_device='cuda:0'):
     """
-        <description>
+    Update and process data from pickle files in the input directory.
 
-        Args :
-        input_directory : directory containing data
+    Args:
+    input_directory: Directory containing pickle files with data.
+    output_py_file: Path to the output Python file.
+    output_pth_file: Path to the output PyTorch tensor file.
+    target_device: Device for PyTorch tensors (e.g., "cuda:0" for GPU or "cpu" for CPU).
+
+    Description:
+    This function updates existing data with new data from pickle files in the input directory. It loads existing data
+    if available, updates it with new data, and processes the data for further use.
+
+    The updated data is formatted for Python file output, removing the "k_size" key from nested dictionaries. The
+    formatted data is saved to a Python file.
+
+    Additionally, the function processes the data into PyTorch tensors, ensuring that each parameter value is a tensor.
+    The processed data is saved to a PyTorch tensor file.
     """
     def load_pickle_files(directory, existing_data):
         for filename in os.listdir(directory):
@@ -66,7 +73,7 @@ def update_and_process_data(input_directory, output_py_file, output_pth_file, ta
 
     # Save the formatted dictionary to a .py file
     with open(output_py_file, 'w') as f:
-        f.write("import torch\n\n")
+        f.write("from torch import tensor\n\n")
         f.write("dictionary_data = ")
         f.write(repr(formatted_data))
 
@@ -95,7 +102,8 @@ def update_and_process_data(input_directory, output_py_file, output_pth_file, ta
 
 # Set up
 input_directory = "/home/Zilan/Desktop/leniasearch/ML_part/Hashed"
-output_py_file = "/home/Zilan/Desktop/leniasearch/ML_part/dictionary_data_test.py"
-output_pth_file = "/home/Zilan/Desktop/leniasearch/ML_part/dict_data_tensors_test.pth"
+output_py_file = "/home/Zilan/Desktop/leniasearch/ML_part/dictionary_data.py"
+output_pth_file = "/home/Zilan/Desktop/leniasearch/ML_part/dict_data_tensors.pth"
 
+# Run the function
 update_and_process_data(input_directory, output_py_file, output_pth_file)
